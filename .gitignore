@@ -1,0 +1,25 @@
+# Python Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Jupyter & IDE
+.ipynb_checkpoints
+.vscode/
+.idea/
+
+# Distribution & Build
+build/
+dist/
+*.egg-info/
+
+# OS Specific
+.DS_Store
+Thumbs.db

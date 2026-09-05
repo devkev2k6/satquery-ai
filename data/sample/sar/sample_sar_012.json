@@ -1,0 +1,11 @@
+{
+  "image_id": "sample_sar_012",
+  "modality": "sar",
+  "surface_type": "urban_scatter",
+  "labels": [
+    "sar_urban_scatter",
+    "radar_backscatter"
+  ],
+  "question": "What are the radar backscatter characteristics of this SAR image?",
+  "answer": "Sentinel-1 style simulated backscatter indicating urban_scatter."
+}

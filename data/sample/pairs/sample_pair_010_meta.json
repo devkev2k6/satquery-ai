@@ -1,0 +1,8 @@
+{
+  "pair_id": "sample_pair_010",
+  "image_t1": "sample_pair_010_t1.png",
+  "image_t2": "sample_pair_010_t2.png",
+  "change_type": "vegetation_recovery",
+  "question": "What environmental or infrastructure change occurred between Time 1 and Time 2?",
+  "answer": "Afforestation and vegetation regrowth occurred."
+}

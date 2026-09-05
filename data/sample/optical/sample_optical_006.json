@@ -1,0 +1,11 @@
+{
+  "image_id": "sample_optical_006",
+  "modality": "optical",
+  "terrain": "cloudy",
+  "labels": [
+    "cloudy",
+    "synthetic_satellite"
+  ],
+  "question": "What terrain type is depicted in this optical satellite observation?",
+  "answer": "Simulated cloudy land cover."
+}

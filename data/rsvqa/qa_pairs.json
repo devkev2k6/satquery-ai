@@ -1,0 +1,58 @@
+[
+  {
+    "id": 101,
+    "image_file": "rsvqa_0101.png",
+    "question": "Are there buildings present in the scene?",
+    "answer": "Yes",
+    "type": "presence"
+  },
+  {
+    "id": 102,
+    "image_file": "rsvqa_0102.png",
+    "question": "Is there any body of water visible?",
+    "answer": "Yes",
+    "type": "presence"
+  },
+  {
+    "id": 103,
+    "image_file": "rsvqa_0103.png",
+    "question": "Is there an airport located in this tile?",
+    "answer": "No",
+    "type": "presence"
+  },
+  {
+    "id": 104,
+    "image_file": "rsvqa_0104.png",
+    "question": "How many major building clusters are visible?",
+    "answer": "4",
+    "type": "count"
+  },
+  {
+    "id": 105,
+    "image_file": "rsvqa_0105.png",
+    "question": "How many agricultural parcels are present?",
+    "answer": "6",
+    "type": "count"
+  },
+  {
+    "id": 106,
+    "image_file": "rsvqa_0106.png",
+    "question": "Is the forested area larger than the open grassland area?",
+    "answer": "Yes",
+    "type": "comparison"
+  },
+  {
+    "id": 107,
+    "image_file": "rsvqa_0107.png",
+    "question": "Does urban impervious surface cover more than 50% of the tile?",
+    "answer": "Yes",
+    "type": "area"
+  },
+  {
+    "id": 108,
+    "image_file": "rsvqa_0108.png",
+    "question": "Is agricultural vegetation present in this arid region?",
+    "answer": "No",
+    "type": "presence"
+  }
+]

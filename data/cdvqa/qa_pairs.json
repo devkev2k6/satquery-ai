@@ -1,0 +1,42 @@
+[
+  {
+    "pair_id": "cdvqa_001",
+    "image_t1": "cdvqa_001_t1.png",
+    "image_t2": "cdvqa_001_t2.png",
+    "question": "Did new building structures appear between Time 1 and Time 2?",
+    "answer": "Yes, urban expansion replaced woodland areas.",
+    "change_type": "urban_expansion"
+  },
+  {
+    "pair_id": "cdvqa_002",
+    "image_t1": "cdvqa_002_t1.png",
+    "image_t2": "cdvqa_002_t2.png",
+    "question": "What hydrological change occurred between T1 and T2?",
+    "answer": "Inundation of farmland forming an open water reservoir.",
+    "change_type": "flooding"
+  },
+  {
+    "pair_id": "cdvqa_003",
+    "image_t1": "cdvqa_003_t1.png",
+    "image_t2": "cdvqa_003_t2.png",
+    "question": "Was there deforestation observed between T1 and T2?",
+    "answer": "Yes, trees were cleared to establish agricultural plots.",
+    "change_type": "deforestation"
+  },
+  {
+    "pair_id": "cdvqa_004",
+    "image_t1": "cdvqa_004_t1.png",
+    "image_t2": "cdvqa_004_t2.png",
+    "question": "What facility was built in this arid zone?",
+    "answer": "Industrial structures and paved access roads.",
+    "change_type": "construction"
+  },
+  {
+    "pair_id": "cdvqa_005",
+    "image_t1": "cdvqa_005_t1.png",
+    "image_t2": "cdvqa_005_t2.png",
+    "question": "Did the road network change between the two satellite passes?",
+    "answer": "No significant changes occurred to the road layout.",
+    "change_type": "no_change"
+  }
+]

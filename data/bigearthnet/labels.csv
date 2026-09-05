@@ -1,0 +1,13 @@
+image_file,labels,modality,split,caption
+S2A_MSIL2A_20170717T113321_01.png,Coniferous forest|Mixed forest,optical,train,"A optical satellite observation showing Coniferous forest, Mixed forest."
+S2A_MSIL2A_20170717T113321_02.png,Discontinuous urban fabric|Industrial or commercial units,optical,train,"A optical satellite observation showing Discontinuous urban fabric, Industrial or commercial units."
+S2A_MSIL2A_20170717T113321_03.png,Arable land|Pastures,optical,train,"A optical satellite observation showing Arable land, Pastures."
+S2A_MSIL2A_20170717T113321_04.png,Water bodies|Inland marshes,optical,train,"A optical satellite observation showing Water bodies, Inland marshes."
+S2A_MSIL2A_20170717T113321_05.png,Broad-leaved forest|Transitional woodland-shrub,optical,val,"A optical satellite observation showing Broad-leaved forest, Transitional woodland-shrub."
+S2A_MSIL2A_20170717T113321_06.png,Complex cultivation patterns|Land principally occupied by agriculture,optical,val,"A optical satellite observation showing Complex cultivation patterns, Land principally occupied by agriculture."
+S2A_MSIL2A_20170717T113321_07.png,Continuous urban fabric|Road and rail networks,optical,test,"A optical satellite observation showing Continuous urban fabric, Road and rail networks."
+S2A_MSIL2A_20170717T113321_08.png,Pastures|Natural grasslands,optical,test,"A optical satellite observation showing Pastures, Natural grasslands."
+S2A_MSIL2A_20170717T113321_09.png,Water courses|Water bodies,sar,train,"A sar satellite observation showing Water courses, Water bodies."
+S2A_MSIL2A_20170717T113321_10.png,Urban fabric|Industrial units,sar,train,"A sar satellite observation showing Urban fabric, Industrial units."
+S2A_MSIL2A_20170717T113321_11.png,Coniferous forest,sar,val,A sar satellite observation showing Coniferous forest.
+S2A_MSIL2A_20170717T113321_12.png,Arable land,sar,test,A sar satellite observation showing Arable land.

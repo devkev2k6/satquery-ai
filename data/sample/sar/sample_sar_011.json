@@ -1,0 +1,11 @@
+{
+  "image_id": "sample_sar_011",
+  "modality": "sar",
+  "surface_type": "water",
+  "labels": [
+    "sar_water",
+    "radar_backscatter"
+  ],
+  "question": "What are the radar backscatter characteristics of this SAR image?",
+  "answer": "Sentinel-1 style simulated backscatter indicating water."
+}

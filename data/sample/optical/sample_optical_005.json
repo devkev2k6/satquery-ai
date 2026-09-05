@@ -1,0 +1,11 @@
+{
+  "image_id": "sample_optical_005",
+  "modality": "optical",
+  "terrain": "desert",
+  "labels": [
+    "desert",
+    "synthetic_satellite"
+  ],
+  "question": "What terrain type is depicted in this optical satellite observation?",
+  "answer": "Simulated desert land cover."
+}

@@ -1,0 +1,11 @@
+{
+  "image_id": "sample_optical_014",
+  "modality": "optical",
+  "terrain": "water",
+  "labels": [
+    "water",
+    "synthetic_satellite"
+  ],
+  "question": "What terrain type is depicted in this optical satellite observation?",
+  "answer": "Simulated water land cover."
+}

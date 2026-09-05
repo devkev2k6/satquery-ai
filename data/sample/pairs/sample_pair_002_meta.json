@@ -1,0 +1,8 @@
+{
+  "pair_id": "sample_pair_002",
+  "image_t1": "sample_pair_002_t1.png",
+  "image_t2": "sample_pair_002_t2.png",
+  "change_type": "deforestation",
+  "question": "What environmental or infrastructure change occurred between Time 1 and Time 2?",
+  "answer": "Woodland area was cleared for arable land."
+}

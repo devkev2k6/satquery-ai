@@ -1,0 +1,8 @@
+{
+  "pair_id": "sample_pair_004",
+  "image_t1": "sample_pair_004_t1.png",
+  "image_t2": "sample_pair_004_t2.png",
+  "change_type": "industrial_development",
+  "question": "What environmental or infrastructure change occurred between Time 1 and Time 2?",
+  "answer": "Industrial units and storage facilities were erected."
+}

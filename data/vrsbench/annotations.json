@@ -1,0 +1,150 @@
+[
+  {
+    "image_id": "vrs_0001",
+    "image_file": "vrs_0001.png",
+    "caption": "A high-resolution satellite scene showing an urban downtown intersection with commercial high-rises and road networks.",
+    "qa_pairs": [
+      {
+        "question": "What is the primary function of the complex in this image?",
+        "answer": "Commercial urban center"
+      },
+      {
+        "question": "Are there road networks visible surrounding the buildings?",
+        "answer": "Yes, major paved arterial roads are present."
+      }
+    ],
+    "grounding": [
+      {
+        "object": "commercial building",
+        "bbox": [
+          20,
+          20,
+          75,
+          75
+        ]
+      },
+      {
+        "object": "road intersection",
+        "bbox": [
+          10,
+          80,
+          118,
+          118
+        ]
+      }
+    ]
+  },
+  {
+    "image_id": "vrs_0002",
+    "image_file": "vrs_0002.png",
+    "caption": "Aerial view of a coastal marina with docking berths, piers, and calm blue harbor waters.",
+    "qa_pairs": [
+      {
+        "question": "What maritime infrastructure is present?",
+        "answer": "A harbor with docking piers and berths."
+      },
+      {
+        "question": "Is the water surface calm or rough?",
+        "answer": "The harbor water is calm."
+      }
+    ],
+    "grounding": [
+      {
+        "object": "pier dock",
+        "bbox": [
+          30,
+          40,
+          90,
+          80
+        ]
+      }
+    ]
+  },
+  {
+    "image_id": "vrs_0003",
+    "image_file": "vrs_0003.png",
+    "caption": "A patchwork of agricultural fields showing geometric crop boundaries and irrigation channels.",
+    "qa_pairs": [
+      {
+        "question": "How are the agricultural parcels arranged?",
+        "answer": "In structured geometric rectangular parcels."
+      },
+      {
+        "question": "Are there active cultivated plots?",
+        "answer": "Yes, multiple vegetated and fallow plots are visible."
+      }
+    ],
+    "grounding": [
+      {
+        "object": "cultivated field",
+        "bbox": [
+          15,
+          15,
+          60,
+          60
+        ]
+      },
+      {
+        "object": "fallow field",
+        "bbox": [
+          65,
+          65,
+          115,
+          115
+        ]
+      }
+    ]
+  },
+  {
+    "image_id": "vrs_0004",
+    "image_file": "vrs_0004.png",
+    "caption": "Dense canopy of coniferous forest located adjacent to a river stream.",
+    "qa_pairs": [
+      {
+        "question": "What dominant vegetation type is visible?",
+        "answer": "Coniferous forest canopy."
+      },
+      {
+        "question": "Is there any hydrographic feature nearby?",
+        "answer": "Yes, a river stream borders the woodland."
+      }
+    ],
+    "grounding": [
+      {
+        "object": "river stream",
+        "bbox": [
+          5,
+          45,
+          120,
+          75
+        ]
+      }
+    ]
+  },
+  {
+    "image_id": "vrs_0005",
+    "image_file": "vrs_0005.png",
+    "caption": "Arid terrain featuring sand dunes, dry gullies, and sparse desert vegetation.",
+    "qa_pairs": [
+      {
+        "question": "What type of landscape is represented?",
+        "answer": "Arid desert landscape with dune ridges."
+      },
+      {
+        "question": "Is dense urban infrastructure present?",
+        "answer": "No, the area is remote and uninhabited."
+      }
+    ],
+    "grounding": [
+      {
+        "object": "sand dune ridge",
+        "bbox": [
+          25,
+          30,
+          100,
+          70
+        ]
+      }
+    ]
+  }
+]

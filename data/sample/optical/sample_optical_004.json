@@ -1,0 +1,11 @@
+{
+  "image_id": "sample_optical_004",
+  "modality": "optical",
+  "terrain": "agriculture",
+  "labels": [
+    "agriculture",
+    "synthetic_satellite"
+  ],
+  "question": "What terrain type is depicted in this optical satellite observation?",
+  "answer": "Simulated agriculture land cover."
+}
