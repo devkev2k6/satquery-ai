@@ -1,64 +1,61 @@
-You are working in the satquery-ai project folder, which you're receiving from a
-teammate (M1) who set up the datasets. This is step 2 of a 6-person pipeline.
+You are working in the satquery-ai project folder, received from M2 (model fine-tuning).
+This is step 3 of a 6-person pipeline.
 
-FIRST: Read docs/HANDOFF.md in full — it tells you what M1 built, especially how to use
-the functions in data/loader.py. Also read data/README.md. Do not proceed until you
-understand what data is available and in what format. If data/sample/ contains synthetic
-placeholder data (because real datasets weren't downloaded yet), that's fine — use it to
-build and test your pipeline; it should work identically once real data is swapped in.
+FIRST: Read docs/HANDOFF.md in full, paying close attention to the section M2 wrote about
+their answer_question(image_path, question) function in models/inference.py — you will
+build directly on top of it. Also skim models/README.md for known model limitations.
 
-YOUR TASK: Fine-tune (or lightly adapt) a small open-source vision-language model on the
-satellite imagery data, so it can answer basic questions about satellite images. This
-satisfies the problem statement's MANDATORY requirement that at least one visual or
-vision-language component be adapted to remote-sensing imagery — this is not optional
-and is the most heavily weighted requirement, so get a working version even if accuracy
-is low.
+YOUR TASK: Build the single-image baseline features required by the problem statement:
+(a) Visual Question Answering on a single image — MANDATORY, and (b) at least one of
+captioning/scene description OR text-guided region grounding — pick ONE, build it well.
+Recommend picking CAPTIONING first since it's simpler to demo reliably; only attempt
+grounding (drawing a box around a described object) if time allows.
 
 Do the following, in order:
 
-1. Choose ONE small, open-source, pretrained vision-language model that is realistic to
-   fine-tune on a laptop or a single free-tier GPU (e.g. Colab). Prefer something in the
-   1B-3B parameter range with an existing image-captioning or VQA head, available via
-   Hugging Face transformers. Document your choice and reasoning in models/MODEL_CHOICE.md.
+1. Create backend/vqa_tool.py with a function:
+   run_vqa(image_path: str, question: str) -> dict
+   It should call M2's answer_question() from models/inference.py, and return a
+   structured dict like:
+   {"task": "vqa", "answer": "...", "confidence": 0.0-1.0, "image_path": "..."}
+   Confidence can be a simple heuristic for now (e.g. based on answer length/certainty
+   phrasing) — document however you calculate it.
 
-2. Write models/finetune.py that:
-   - Loads the base model and processor
-   - Loads training data using data.loader.load_bigearthnet() (or load_sample_data() as
-     fallback) from M1's code
-   - Applies a LIGHTWEIGHT adaptation method (LoRA or similar parameter-efficient
-     fine-tuning — NOT full fine-tuning, which is unrealistic for a hackathon timeline)
-   - Trains for a small number of steps/epochs suitable for demonstrating adaptation, not
-     achieving state-of-the-art accuracy
-   - Saves the adapted model weights to models/checkpoints/
+2. Create backend/captioning_tool.py with a function:
+   run_captioning(image_path: str) -> dict
+   This should produce a natural-language description of the image's land cover and
+   major visible objects. You can implement this by prompting M2's model with a fixed
+   captioning-style question (e.g. "Describe the land cover and major objects visible in
+   this image.") if the model doesn't have a dedicated captioning mode. Return:
+   {"task": "captioning", "caption": "...", "confidence": 0.0-1.0, "image_path": "..."}
 
-3. Write models/inference.py exposing ONE simple, clean function:
-   answer_question(image_path: str, question: str) -> str
-   This function should load the fine-tuned model and return a text answer. This exact
-   function signature matters — teammates after you (M3, M4, M5) will import and call it
-   directly, so do not change the name or arguments without updating docs/HANDOFF.md.
+3. IF TIME ALLOWS, create backend/grounding_tool.py with a function:
+   run_grounding(image_path: str, query: str) -> dict
+   That attempts to identify and return approximate bounding-box coordinates for the
+   object described in query (e.g. "the water body"). If the underlying model can't do
+   this reliably, implement a clearly-labeled simplified version (e.g. basic color/texture
+   heuristics for water/vegetation) and document this limitation clearly — do not claim
+   accuracy you don't have. Return:
+   {"task": "grounding", "bbox": [x1, y1, x2, y2], "confidence": 0.0-1.0, "image_path": "..."}
 
-4. Write a small evaluation script models/evaluate.py that runs the model against a
-   handful of VRSBench and RSVQA sample questions (from M1's loaders) and prints
-   question/expected-answer/model-answer side by side, so the team can sanity-check
-   quality at a glance.
+4. Write tests/test_vqa_captioning.py that runs both tools against 3-5 sample images from
+   M1's data/sample/ folder and prints results, so anyone can verify the tools work by
+   running one command.
 
-5. Write models/README.md documenting: the base model used, the adaptation method, how to
-   re-run training, how to call answer_question(), expected inference time, and current
-   known limitations/failure modes (be honest — e.g. "struggles with counting objects" is
-   useful information for M3).
+5. Write backend/README.md (create the backend/ README if it doesn't exist yet — future
+   teammates will keep adding to this same file) documenting each function's exact
+   signature, return format, and any caveats.
 
 6. Update docs/HANDOFF.md by APPENDING:
-   - What model you used and why
-   - Confirmation that answer_question(image_path, question) works and how to call it
-   - Any GPU/hardware requirements the next teammates need to know about
-   - Recommendation on whether M3-M4 should call your model directly for their tasks, or
-     build lighter rule-based logic for anything your model handles poorly
+   - Which functions you built and their exact signatures (this matters a lot — M5 the
+     agent lead will call these directly)
+   - Whether you implemented captioning, grounding, or both
+   - Known weaknesses or edge cases (e.g. "captions are generic for cluttered urban
+     scenes")
 
 7. Commit your work to git.
 
-Do NOT modify data/ (M1's work) except to read from it. Do NOT build the backend, frontend,
-or agent controller — that's for teammates after you. Your deliverable is a working,
-importable answer_question() function plus the training pipeline that produced it.
+Do NOT modify data/ or models/ except to import/call from them. Do NOT build change
+detection (M4), the fusion tool (M4), the agent controller (M5), or the frontend (M6).
 
-When finished, run models/evaluate.py and paste its output so we can confirm the model
-is actually answering questions (even if answers are imperfect).
+When finished, run tests/test_vqa_captioning.py and paste the output.
