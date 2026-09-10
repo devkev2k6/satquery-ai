@@ -153,3 +153,97 @@ print(answer)  # e.g., "land and water"
 | **Exact Object Counting ("How many X?")** | **Use rule-based / detector tools or prompt for presence** | VLM provides approximate counts (e.g. "1" or "multiple"), but struggles with precise counts of small clustered objects. M3 should prompt for presence first or route to a dedicated detector if available. |
 | **Bi-Temporal Change Detection (CDVQA)** | **Tile images or provide comparative context** | Single-image VLM receives one image per prompt. For multitemporal pairs, horizontally concatenate $T_1$ and $T_2$ or query both sequentially and use agent reasoning to compare. |
 
+---
+
+## Phase 3: Single-Image Baseline Features - VQA, Captioning & Grounding (Completed)
+
+### 1. What Was Built & Where It Lives
+- **Visual Question Answering Tool** (`backend/vqa_tool.py`):
+  - Function: `run_vqa(image_path: str, question: str) -> Dict[str, Any]`
+  - Directly interfaces M2's `answer_question()` from `models/inference.py`.
+  - Computes structured confidence score [0.0 - 1.0] based on certainty markers, response brevity, and error handling.
+- **Scene Captioning Tool** (`backend/captioning_tool.py`):
+  - Function: `run_captioning(image_path: str, prompt: Optional[str] = None) -> Dict[str, Any]`
+  - Leverages M2's adapted VLM with structured remote sensing caption prompts to generate fluent natural-language land cover and visible object summaries.
+- **Text-Guided Region Grounding Tool** (`backend/grounding_tool.py`):
+  - Function: `run_grounding(image_path: str, query: str) -> Dict[str, Any]`
+  - Implements remote sensing spectral/texture heuristic localization (Excess Green index for vegetation, NDWI RGB approximation for water, variance/reflectance for urban/structures, brightness for aircraft/runways).
+  - Returns robust `[x1, y1, x2, y2]` pixel bounding boxes filtered with spatial percentiles to prevent noise inflation.
+- **Automated Verification Test Suite** (`tests/test_vqa_captioning.py`):
+  - Runs all three baseline tools across 4 representative sample images from `data/sample/optical/` (Forest, Water, Urban, Agriculture).
+  - Asserts strict contract compliance (key presence, types, bounding box integer coordinate validity, confidence ranges).
+- **Backend Documentation** (`backend/README.md`):
+  - Comprehensive API documentation with signatures, return payloads, confidence formulas, and usage snippets.
+
+---
+
+### 2. Implemented Tool Contracts & Exact Signatures
+
+Downstream teammates (especially M5 Agent Lead and M4 Backend/Fusion) can directly import and call:
+
+```python
+from backend.vqa_tool import run_vqa
+from backend.captioning_tool import run_captioning
+from backend.grounding_tool import run_grounding
+
+# 1. Visual Question Answering (VQA)
+# Signature: run_vqa(image_path: str, question: str) -> dict
+vqa_res = run_vqa(
+    image_path="data/sample/optical/sample_optical_001.png",
+    question="What terrain type is depicted in this optical satellite observation?"
+)
+# Returns:
+# {
+#     "task": "vqa",
+#     "answer": "flat land",
+#     "confidence": 0.90,
+#     "image_path": "data/sample/optical/sample_optical_001.png"
+# }
+
+# 2. Scene Captioning
+# Signature: run_captioning(image_path: str, prompt: Optional[str] = None) -> dict
+cap_res = run_captioning(
+    image_path="data/sample/optical/sample_optical_001.png"
+)
+# Returns:
+# {
+#     "task": "captioning",
+#     "caption": "Satellite imagery showing trees and grass.",
+#     "confidence": 0.95,
+#     "image_path": "data/sample/optical/sample_optical_001.png"
+# }
+
+# 3. Text-Guided Region Grounding
+# Signature: run_grounding(image_path: str, query: str) -> dict
+grd_res = run_grounding(
+    image_path="data/sample/optical/sample_optical_001.png",
+    query="forest and green vegetation"
+)
+# Returns:
+# {
+#     "task": "grounding",
+#     "bbox": [3, 3, 125, 125],
+#     "confidence": 0.65,
+#     "image_path": "data/sample/optical/sample_optical_001.png"
+# }
+```
+
+---
+
+### 3. Implementation Scope: Captioning and Grounding
+- **Captioning**: Implemented and validated using M2's fine-tuned model with formatted scene descriptions.
+- **Grounding**: Also implemented and validated using a robust spectral/texture heuristic pipeline designed specifically for remote sensing images. Both features are fully ready and available for M5's agent tool registry.
+
+---
+
+### 4. Known Weaknesses, Caveats & Edge Cases for Teammates M4–M6
+
+1. **Captions on Dense/Cluttered Scenes**:
+   - For complex, mixed-use patches (e.g., dense urban scenes with commercial buildings, transit hubs, and sparse greenery), the VLM caption focuses primarily on the dominant visual feature (often generic e.g. "trees" or "buildings").
+   - *Guidance for M5 (Agent)*: Encourage the agent to decompose general scene questions into specific VQA queries (e.g. asking specifically about road density, water presence, or building types) rather than relying exclusively on the global caption.
+2. **Grounding Accuracy Scope**:
+   - Because `Salesforce/blip-vqa-base` is an autoregressive encoder-decoder VQA model without native bounding-box regression heads, `run_grounding` uses an index-based spectral heuristic. It works well for dominant macro land cover (water bodies, forests, agricultural tracts, large runways), but cannot reliably isolate small individual cars or occluded targets.
+3. **Single Image Limitation**:
+   - All tools in `backend/` are currently single-image scoped. For M4 (Change Detection & Multimodal Fusion), multitemporal pairs ($T_1, T_2$) or SAR+Optical pairs should be passed through separate queries or concatenated horizontally prior to passing to `run_vqa`.
+
+
