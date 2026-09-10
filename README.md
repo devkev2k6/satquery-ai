@@ -1,123 +1,178 @@
-# SatQuery AI - Data Layer
+# SatQuery AI 🛰️
+### Multimodal Satellite Question Answering, Grounding & Cross-Modal Radar Fusion Agent
 
-This directory contains the remote sensing datasets, synthetic fallback benchmarks, and loading utilities for the **SatQuery AI** multimodal satellite question answering and reasoning system.
+**SatQuery AI** is an autonomous Earth Observation (EO) intelligence agent designed to answer complex natural language questions over high-resolution optical and Synthetic Aperture Radar (SAR) satellite imagery. 
+
+The system features fine-tuned vision-language models, spectral heuristic localization, bi-temporal change detection, microwave radar dielectric fusion, an explainable rule-based agent orchestrator, and an interactive Streamlit mission-control dashboard with automated PDF intelligence reporting.
 
 ---
 
-## 1. Directory Structure
+## 1. System Architecture & 6-Stage Pipeline
 
-```text
-data/
-├── DOWNLOAD_INSTRUCTIONS.md   # Complete guide to obtaining full academic datasets
-├── README.md                  # This file
-├── loader.py                  # Unified Python loader utility for all datasets
-│
-├── bigearthnet/               # Primary Image-Text Adaptation dataset (Sentinel-2 / Sentinel-1)
-│   ├── images/                # Sample image patches (.png / .tif)
-│   └── labels.csv             # Patch IDs, CLC land cover labels, modalities, splits
-│
-├── vrsbench/                  # Visual Reasoning Benchmark (Captioning, Grounding, VQA)
-│   ├── images/                # High-resolution optical satellite images
-│   └── annotations.json       # Captions, questions, answers, and bounding boxes
-│
-├── rsvqa/                     # Remote Sensing Visual Question Answering
-│   ├── images/                # Sentinel-2 / aerial scene images
-│   └── qa_pairs.json          # Presence, count, area, and comparison QA pairs
-│
-├── cdvqa/                     # Change Detection Visual Question Answering
-│   ├── image_pairs/           # Multitemporal pairs (pair_*_t1.png, pair_*_t2.png)
-│   └── qa_pairs.json          # Bi-temporal change detection QA pairs
-│
-└── sample/                    # Synthetic Fallback Data (Ready out-of-the-box)
-    ├── optical/               # Synthetic multispectral optical satellite tiles
-    ├── sar/                   # Synthetic Sentinel-1 radar backscatter tiles
-    └── pairs/                 # Synthetic bi-temporal change detection pairs
+```mermaid
+flowchart TD
+    subgraph UI ["Phase 6: Frontend & Application Layer"]
+        User([User / Analyst]) -->|Query + Images| StreamlitApp[Streamlit Dashboard / frontend/app.py]
+        StreamlitApp -->|Download Request| PDFGen[PDF Report Generator / frontend/report_generator.py]
+    end
+
+    subgraph Agent ["Phase 5: Agentic Controller & Tool Orchestration"]
+        StreamlitApp -->|process_query| Controller[Agent Controller / agent/controller.py]
+        Controller --> Classifier[Task Classifier / agent/task_classifier.py]
+        Controller --> Validator[Input Validator / agent/input_validator.py]
+    end
+
+    subgraph Backend ["Phase 3 & Phase 4: Analytical Tool Registry"]
+        Controller -->|vqa| VQATool[VQA Tool / backend/vqa_tool.py]
+        Controller -->|captioning| CaptionTool[Captioning Tool / backend/captioning_tool.py]
+        Controller -->|grounding| GroundingTool[Grounding Tool / backend/grounding_tool.py]
+        Controller -->|change_detection| CDTool[Change Detection Tool / backend/change_detection_tool.py]
+        Controller -->|fusion| FusionTool[Optical+SAR Fusion Tool / backend/fusion_tool.py]
+    end
+
+    subgraph Models ["Phase 2: Vision-Language Intelligence Layer"]
+        VQATool --> VLMInference[Adapted VLM / models/inference.py]
+        CaptionTool --> VLMInference
+        CDTool --> VLMInference
+        FusionTool --> VLMInference
+        VLMInference --> BLIPLoRA[(Salesforce/blip-vqa-base + RS-LoRA Adapter)]
+    end
+
+    subgraph Data ["Phase 1: Dataset & Ingestion Layer"]
+        BLIPLoRA -.-> DataLoader[Dataset Loader / data/loader.py]
+        DataLoader -.-> Datasets[(BigEarthNet | VRSBench | RSVQA | CDVQA | Synthetic)]
+    end
 ```
 
 ---
 
-## 2. Dataset Purpose & Description
+## 2. Core Capabilities
 
-### BigEarthNet
-- **Purpose**: Primary benchmark for remote sensing image-text adaptation and multi-label classification.
-- **Sensor Types**: Sentinel-2 Multi-Spectral Instrument (12 bands) and Sentinel-1 SAR (dual-pol VV/VH).
-- **Classes**: 19-class or 43-class CORINE Land Cover (CLC) categories (e.g., *Coniferous forest*, *Industrial or commercial units*, *Water bodies*).
-
-### VRSBench (Visual Reasoning in Remote Sensing)
-- **Purpose**: Evaluates high-level visual reasoning, dense captioning, fine-grained object grounding (bounding boxes), and visual question answering on high-resolution Earth observation data.
-
-### RSVQA (Remote Sensing Visual Question Answering)
-- **Purpose**: Evaluates single-image VQA for satellite and aerial imagery. Includes specific question types:
-  - *Presence*: "Is there an airport present?"
-  - *Count*: "How many storage tanks are in the harbor?"
-  - *Area Comparison*: "Is the agricultural area greater than the urban area?"
-
-### CDVQA (Change Detection Visual Question Answering)
-- **Purpose**: Evaluates multitemporal change understanding between bi-temporal image pairs ($T_1$ and $T_2$). Addresses questions such as "What structures were built between Time 1 and Time 2?" or "Did deforestation occur in the western section?".
-
-### Sample (Synthetic Fallback)
-- **Purpose**: Provides realistic, lightweight synthetic satellite tiles (optical, SAR, and change pairs) immediately without requiring external multi-gigabyte downloads. Allows pipeline development, training loop testing, and API integration from day one.
+| Capability | Modalities | Primary Backend Tool | Key Outputs |
+| :--- | :--- | :--- | :--- |
+| **Scene Captioning** | Optical | `backend.captioning_tool` | Fluent natural language land-cover and surface feature summaries |
+| **Visual Grounding** | Optical | `backend.grounding_tool` | Precise `[x1, y1, x2, y2]` pixel bounding box localization |
+| **Visual Question Answering (VQA)** | Optical / SAR | `backend.vqa_tool` | Targeted answers regarding terrain, infrastructure, and object presence |
+| **Bi-Temporal Change Detection** | Multi-temporal Optical ($T_1, T_2$) | `backend.change_detection_tool` | Normalized pixel variance metrics, change detection flag (`true`/`false`), and transition narrative |
+| **Cross-Modal Optical + SAR Fusion** | Optical + SAR (Radar) | `backend.fusion_tool` | Joint analysis combining multispectral reflectance with microwave backscatter dielectric roughness |
 
 ---
 
-## 3. How to Obtain Full Versions
+## 3. Five Representative Benchmark Demonstrations
 
-Full datasets are large (ranging from ~1.5 GB to ~80 GB) and some require free user registration.
+SatQuery AI natively handles all five representative queries from the problem statement:
 
-Detailed, step-by-step download instructions, URLs, citation links, and extraction guides are documented in:
-👉 [data/DOWNLOAD_INSTRUCTIONS.md](DOWNLOAD_INSTRUCTIONS.md)
-
-Quick Links:
-- **BigEarthNet**: [bigearth.net](https://bigearth.net/) / [Zenodo S2 Archive](https://zenodo.org/records/4893574)
-- **VRSBench**: [VRSBench GitHub](https://github.com/Visual-Intelligence-Laboratory/VRSBench)
-- **RSVQA**: [RSVQA Zenodo](https://zenodo.org/records/6344334)
-- **CDVQA**: [CDVQA GitHub Repository](https://github.com/ggs-whu/CDVQA)
+1. **Scene Captioning**:
+   - *Query*: *"Describe the land-cover and major objects visible in this image."*
+   - *Result*: Autonomously routed to `captioning`; produces comprehensive scene description (e.g. *"Satellite imagery showing grass and trees"*).
+2. **Text-Guided Region Grounding**:
+   - *Query*: *"Highlight the water body referred to in the query."*
+   - *Result*: Autonomously routed to `grounding`; localizes coordinates `[3, 3, 125, 125]` with highlighted visual bounding box.
+3. **Bi-Temporal Change Detection**:
+   - *Query*: *"What changed between these two dates, and where did the change occur?"*
+   - *Result*: Autonomously routed to `change_detection`; analyzes radiometric difference and outputs comparative transition assessment.
+4. **Optical + SAR Cross-Modal Fusion**:
+   - *Query*: *"Use the optical and SAR images together to identify built-up and water-covered regions."*
+   - *Result*: Autonomously routed to `fusion`; synthesizes optical spectral boundaries with SAR double-bounce corner reflections.
+5. **Change Trend Analysis (CDVQA)**:
+   - *Query*: *"Has the built-up area increased, decreased, or remained unchanged?"*
+   - *Result*: Autonomously routed to `change_detection`; inspects temporal state evolution across Time 1 and Time 2.
 
 ---
 
-## 4. Unified Python Data Loader (`data/loader.py`)
+## 4. Setup & Quickstart
 
-All teammates (particularly M2 for model fine-tuning) should import and use the standard loaders in [data/loader.py](loader.py).
+### Prerequisites
+- Python 3.10+ (tested on Python 3.11)
+- 4GB+ RAM (CUDA GPU optional; auto-detects GPU with transparent CPU fallback)
 
-### Common Return Format
-All loaders return a standard Python `List[Dict[str, Any]]`. Every dictionary contains the core keys:
-- `"image_path"`: `str` — Absolute or relative path to the image file.
-- `"question"`: `str` — Query prompt, VQA question, or image-text adaptation prompt.
-- `"answer"`: `str` — Ground truth answer or label string.
+### Step 1: Clone and Set Up Virtual Environment
+```bash
+# Clone the repository
+git clone https://github.com/devkev2k6/satquery-ai.git
+cd satquery-ai
 
-### Available Loader Functions
+# Windows Setup (Command Prompt or PowerShell)
+scripts\setup_env.bat
+.venv\Scripts\activate
 
-```python
-from data.loader import (
-    load_bigearthnet,
-    load_vrsbench,
-    load_rsvqa,
-    load_cdvqa,
-    load_sample_data,
-)
+# Or on Linux / macOS
+chmod +x scripts/setup_env.sh
+./scripts/setup_env.sh
+source .venv/bin/activate
+```
 
-# 1. BigEarthNet (returns image_path, patch_id, labels, modality, split, question, answer)
-train_samples = load_bigearthnet(split="train", limit=100)
+### Step 2: Install Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-# 2. VRSBench (returns image_path, image_id, caption, question, answer, qa_pairs, grounding)
-vrs_samples = load_vrsbench(limit=50)
+### Step 3: Launch the Interactive Streamlit Web Application
+```bash
+streamlit run frontend/app.py
+```
+Open your browser at `http://localhost:8501`.
 
-# 3. RSVQA (returns image_path, id, question, answer, question_type)
-rsvqa_samples = load_rsvqa(question_type="count", limit=50)
+---
 
-# 4. CDVQA (returns pair_id, image_path, image_t1_path, image_t2_path, question, answer, change_type)
-cdvqa_samples = load_cdvqa(limit=50)
+## 5. Web Application Features
 
-# 5. Synthetic Fallback (returns image_path, category, modality, question, answer, etc.)
-synthetic_optical = load_sample_data(category="optical")
-synthetic_sar = load_sample_data(category="sar")
-synthetic_pairs = load_sample_data(category="pairs")
+- **⚡ 1-Click Demo Presets**: Sidebar selector that instantly preloads all 5 benchmark queries and sample assets for zero-latency live presentations.
+- **📁 Multi-Format Image Ingestion**: Supports `.png`, `.jpg`, `.jpeg`, and `.tif`/`.tiff` files for single-image, bi-temporal pair ($T_1/T_2$), or optical+SAR multimodal queries.
+- **🏷️ Sensor Modality Tagging**: Interactive dropdowns to tag images as `optical` or `sar` for cross-modal routing.
+- **🖼️ Visual Evidence Display**: Inline rendering of raw observations alongside dynamic visual grounding bounding box overlays.
+- **🛠️ Auditable Execution Summary**: Collapsible expander detailing selected task, tool dispatched, parameters, and UTC timestamp.
+- **📑 Downloadable PDF Reports**: Automated one-click generation of professional Earth Observation intelligence PDF summaries.
+
+---
+
+## 6. Verification Test Suites
+
+SatQuery AI includes automated verification suites for all stages of the pipeline:
+
+```bash
+# 1. Run the Full End-to-End Demo Suite (Simulates UI & PDF generation)
+python tests/test_full_demo.py
+
+# 2. Run the Agent Controller Verification Suite (All 5 queries + validation checks)
+python tests/test_agent_controller.py
+
+# 3. Run Baseline Tools Verification (VQA, Captioning, Grounding)
+python tests/test_vqa_captioning.py
+
+# 4. Run Multi-Image Tools Verification (Change Detection & SAR Fusion)
+python tests/test_change_and_fusion.py
 ```
 
 ---
 
-## 5. Known Limitations of Sample Data
+## 7. Team Contributions & Pipeline Ownership
 
-1. **Sample Scale**: The committed sample data contains representative subsets designed for development, sanity checks, and unit testing under 500MB total.
-2. **Synthetic Textures**: The images in `data/sample/` simulate optical reflectance (NDVI-like greens, water absorption, urban grids) and SAR backscatter speckle noise. While mathematically structured to emulate satellite distributions, they should be replaced with official BigEarthNet / VRSBench patches for production model fine-tuning.
-3. **GeoTIFF Bands**: Real BigEarthNet S2 contains 12 spectral bands at 10m, 20m, and 60m resolution. Sample images are stored as standard 3-band RGB/greyscale PNGs for universal compatibility without requiring GDAL C-library binaries during initial scaffolding.
+SatQuery AI was developed across six integrated engineering phases:
+
+- **Teammate M1 (Environment & Data Layer Lead)**:
+  - Repository structure, virtual environment setup scripts (`setup_env.sh`, `setup_env.bat`).
+  - Curation of sub-500MB benchmark subsets (`data/bigearthnet/`, `data/vrsbench/`, `data/rsvqa/`, `data/cdvqa/`, `data/sample/`).
+  - Unified Python loader utility (`data/loader.py`).
+- **Teammate M2 (Model Fine-Tuning & Adaptation Lead)**:
+  - Architectural model selection (`Salesforce/blip-vqa-base` with Low-Rank Adaptation).
+  - Parameter-efficient LoRA training pipeline (`models/finetune.py`) and cached inference module (`models/inference.py`).
+  - Model checkpoint management and benchmark evaluation (`models/evaluate.py`).
+- **Teammate M3 (Single-Image Baseline Features Lead)**:
+  - Visual Question Answering tool (`backend/vqa_tool.py`) with confidence calculation.
+  - Scene captioning and land-cover description engine (`backend/captioning_tool.py`).
+  - Text-guided region grounding with remote sensing spectral heuristics (`backend/grounding_tool.py`).
+- **Teammate M4 (Multi-Image Capabilities Lead)**:
+  - Bi-temporal change detection tool with radiometric pixel variance metrics (`backend/change_detection_tool.py`).
+  - Cross-modal Optical + SAR fusion tool leveraging radar backscatter statistics (`backend/fusion_tool.py`).
+  - Multi-image test suite (`tests/test_change_and_fusion.py`).
+- **Teammate M5 (Agent Controller & Orchestration Lead)**:
+  - Rule-based task classifier (`agent/task_classifier.py`) with deterministic keyword and modality routing.
+  - Input schema and modality validator (`agent/input_validator.py`).
+  - Central agent controller (`agent/controller.py`) with auditable execution summary logging.
+  - Agent test suite (`tests/test_agent_controller.py`) and developer documentation (`agent/README.md`).
+- **Teammate M6 (Web Application & Final Integration Lead)**:
+  - Streamlit interactive mission-control dashboard (`frontend/app.py`) with 1-click benchmark demo showcase.
+  - Automated PDF intelligence report compiler (`frontend/report_generator.py`).
+  - Full end-to-end demo test suite (`tests/test_full_demo.py`).
+  - Top-level documentation and final handoff consolidation (`docs/HANDOFF.md`).

@@ -10,3 +10,5 @@ torch>=2.0.0
 transformers>=4.40.0
 peft>=0.10.0
 accelerate>=0.28.0
+streamlit>=1.30.0
+fpdf2>=2.7.0

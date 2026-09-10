@@ -23,3 +23,4 @@ dist/
 # OS Specific
 .DS_Store
 Thumbs.db
+outputs/
