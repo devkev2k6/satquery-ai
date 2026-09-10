@@ -339,3 +339,127 @@ Run the Phase 4 verification test suite:
 ```bash
 python tests/test_change_and_fusion.py
 ```
+
+---
+
+## Phase 5: Agentic Model & Tool Orchestration (Completed)
+
+### 1. What Was Built & Where It Lives
+- **Rule-Based Task Classifier** (`agent/task_classifier.py`):
+  - Function: `classify_task(query: Optional[str], num_images: int, image_types: Optional[List[str]] = None) -> str`
+  - Deterministic keyword and sensor modality matching routing to `"vqa"`, `"captioning"`, `"grounding"`, `"change_detection"`, or `"fusion"`.
+- **Input Validator** (`agent/input_validator.py`):
+  - Function: `validate_input(query: Optional[str], image_paths: List[str], image_types: Optional[List[str]] = None, task: Optional[str] = None) -> Dict[str, Any]`
+  - Validates image count rules per task, supported raster formats (`.png`, `.jpg`, `.jpeg`, `.tif`, `.tiff`), disk existence, and optical/SAR sensor compatibility before running models.
+- **Agent Controller** (`agent/controller.py`):
+  - Function: `process_query(query: Optional[str], image_paths: List[str], image_types: Optional[List[str]] = None) -> Dict[str, Any]`
+  - Main orchestrator: classifies intent, validates inputs, dynamically executes the matching backend tool, and returns the result with a full auditable `execution_summary`.
+- **Comprehensive Agent Test Suite** (`tests/test_agent_controller.py`):
+  - Validates end-to-end routing and execution across all 5 representative queries from the original problem statement, single-image VQA, and negative validation edge cases.
+- **Agent Architecture Documentation** (`agent/README.md`):
+  - Comprehensive guide covering architecture, decision tree, input validation rules, and instructions on extending the controller with new tools.
+
+---
+
+### 2. Exact Function Signature & Return Schema for Teammate M6 (Frontend)
+
+Teammate M6 (Streamlit / Web UI Lead) should import and invoke `process_query` as the single entry point for all user interactions:
+
+```python
+from agent.controller import process_query
+
+# Example 1: Scene Captioning
+res_caption = process_query(
+    query="Describe the land-cover and major objects visible in this image.",
+    image_paths=["data/sample/optical/sample_optical_001.png"],
+    image_types=["optical"]  # Optional: can be None or omitted
+)
+
+# Example 2: Text-Guided Grounding
+res_grounding = process_query(
+    query="Highlight the water body referred to in the query.",
+    image_paths=["data/sample/optical/sample_optical_002.png"],
+    image_types=["optical"]
+)
+
+# Example 3: Bi-Temporal Change Detection
+res_change = process_query(
+    query="What changed between these two dates, and where did the change occur?",
+    image_paths=[
+        "data/sample/pairs/sample_pair_001_t1.png",
+        "data/sample/pairs/sample_pair_001_t2.png"
+    ],
+    image_types=["optical", "optical"]
+)
+
+# Example 4: Joint Optical + SAR Fusion
+res_fusion = process_query(
+    query="Use the optical and SAR images together to identify built-up and water-covered regions.",
+    image_paths=[
+        "data/sample/optical/sample_optical_003.png",
+        "data/sample/sar/sample_sar_003.png"
+    ],
+    image_types=["optical", "sar"]
+)
+```
+
+#### Standard Return Schema
+Every invocation returns a JSON-serializable dictionary with 3 top-level keys:
+```json
+{
+  "result": {
+    "task": "captioning",
+    "caption": "Satellite imagery showing flat land.",
+    "confidence": 0.88,
+    "image_path": "data/sample/optical/sample_optical_001.png"
+  },
+  "execution_summary": {
+    "task": "captioning",
+    "tool_used": "run_captioning",
+    "parameters": {
+      "image_path": "data/sample/optical/sample_optical_001.png",
+      "prompt": "Describe the land-cover and major objects visible in this image."
+    },
+    "timestamp": "2026-09-10T07:15:30.123456+00:00"
+  },
+  "success": true
+}
+```
+
+In case of input validation errors:
+```json
+{
+  "result": {
+    "task": "change_detection",
+    "error": "Task 'change_detection' requires exactly 2 images (before and after), but received 1."
+  },
+  "execution_summary": {
+    "task": "change_detection",
+    "tool_used": null,
+    "parameters": { ... },
+    "timestamp": "2026-09-10T07:15:30.123456+00:00"
+  },
+  "success": false
+}
+```
+
+---
+
+### 3. Known Misclassification Cases & Limitations for Frontend Demo (M6)
+
+1. **Ambiguous Hybrid Queries (e.g., "Compare" + "Highlight")**:
+   - If a user provides two images and asks: *"Compare these two images and highlight the difference"*, the classifier gives precedence to `change_detection` due to the 2-image context and comparison phrasing. Spatial bounding-box localization will not be produced for the change.
+   - *Recommendation for M6*: Present task selection in the UI with an optional manual dropdown override so users can choose "Change Detection" vs "Grounding" if their prompt is inherently multi-objective.
+2. **Implicit Optical-SAR Fusion without Specifying Types**:
+   - If a user uploads an Optical image and a SAR image but leaves `image_types` blank and asks a generic question without mentioning "SAR" or "radar" (e.g. *"What is in these two images?"*), the controller will default to `change_detection`.
+   - *Recommendation for M6*: Ensure the frontend file upload widget tags each uploaded slot with its modality (Optical vs SAR) and passes `image_types=['optical', 'sar']`.
+3. **Complex Multi-Step Decompositions**:
+   - The current controller operates as a single-turn deterministic router. Queries asking to perform multiple disjoint tasks in sequence (e.g. *"First describe the scene, then locate all buildings, then tell me if it rained"*) will route to the highest precedence task (`grounding`).
+
+---
+
+### 4. Verification
+Run the Phase 5 Agent Controller verification suite:
+```bash
+python tests/test_agent_controller.py
+```
