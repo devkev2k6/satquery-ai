@@ -246,4 +246,96 @@ grd_res = run_grounding(
 3. **Single Image Limitation**:
    - All tools in `backend/` are currently single-image scoped. For M4 (Change Detection & Multimodal Fusion), multitemporal pairs ($T_1, T_2$) or SAR+Optical pairs should be passed through separate queries or concatenated horizontally prior to passing to `run_vqa`.
 
+---
 
+## Phase 4: Multi-Image Capabilities - Change Detection & Optical+SAR Fusion (Completed)
+
+### 1. What Was Built & Where It Lives
+- **Bi-Temporal Change Detection Tool** (`backend/change_detection_tool.py`):
+  - Function: `run_change_detection(image_path_before: str, image_path_after: str, question: Optional[str] = None) -> Dict[str, Any]`
+  - Supports both general change description generation ($T_1 \to T_2$ narrative) and targeted change-based Visual Question Answering.
+  - Combines normalized mean absolute pixel variance metrics with dual-pass VLM semantic inspection.
+- **Optical + SAR Cross-Modal Fusion Tool** (`backend/fusion_tool.py`):
+  - Function: `run_optical_sar_fusion(optical_path: str, sar_path: str, question: Optional[str] = None) -> Dict[str, Any]`
+  - Combines radiometric radar backscatter physics (specular reflection for water, double-bounce corner reflection for urban structures, diffuse scattering for vegetation) with optical multi-spectral reflectance and VLM semantic classification.
+- **Automated Verification Test Suite** (`tests/test_change_and_fusion.py`):
+  - Validates both tools across 9 test scenarios (synthetic change pairs, negative control identical pairs, CDVQA benchmark pairs, optical+SAR pairs, BigEarthNet patches, and error handling for missing files).
+  - Verifies 100% contract compliance and confidence bounds.
+- **Updated Backend Documentation** (`backend/README.md`):
+  - Updated tool summary table, API contracts, JSON schemas, confidence calculations, and caveats.
+
+---
+
+### 2. Implemented Tool Contracts & Exact Signatures for Teammate M5 (Agent Controller)
+
+Teammate M5 can directly register and invoke these two tools in the LangChain/LangGraph agent controller:
+
+```python
+from backend.change_detection_tool import run_change_detection
+from backend.fusion_tool import run_optical_sar_fusion
+
+# 1. Bi-Temporal Change Detection
+# Exact Signature: run_change_detection(image_path_before: str, image_path_after: str, question: Optional[str] = None) -> dict
+cd_res = run_change_detection(
+    image_path_before="data/sample/pairs/sample_pair_001_t1.png",
+    image_path_after="data/sample/pairs/sample_pair_001_t2.png",
+    question="What environmental or infrastructure change occurred between Time 1 and Time 2?"
+)
+# Returns:
+# {
+#     "task": "change_detection",
+#     "description": "Change detected: Prior observation (Time 1) depicted land and water (tropical climate), whereas subsequent observation (Time 2) depicts land and water (water source).",
+#     "change_detected": True,
+#     "confidence": 0.91,
+#     "before_path": "data/sample/pairs/sample_pair_001_t1.png",
+#     "after_path": "data/sample/pairs/sample_pair_001_t2.png"
+# }
+
+# 2. Optical + SAR Cross-Modal Fusion
+# Exact Signature: run_optical_sar_fusion(optical_path: str, sar_path: str, question: Optional[str] = None) -> dict
+fusion_res = run_optical_sar_fusion(
+    optical_path="data/sample/optical/sample_optical_003.png",
+    sar_path="data/sample/sar/sample_sar_003.png",
+    question="Identify built-up and water-covered regions using both images together."
+)
+# Returns:
+# {
+#     "task": "fusion",
+#     "answer": "Joint Optical-SAR Analysis: Optical imagery provides spectral delineation indicating temperate (squares). Co-registered SAR confirms physical dielectric properties with elevated radar backscatter with strong double-bounce reflections (characteristic of built-up urban structures or metallic targets) (water). Combining both sensors enables robust cross-modal verification...",
+#     "confidence": 0.89,
+#     "optical_path": "data/sample/optical/sample_optical_003.png",
+#     "sar_path": "data/sample/sar/sample_sar_003.png"
+# }
+```
+
+---
+
+### 3. Architectural Clarification: Nature of Multimodal Fusion
+
+**EXPLICIT NOTE FOR M5 AGENT CONTROLLER**:
+- The fusion implementation in `backend/fusion_tool.py` is a **text-level and radiometric feature combination approach**, NOT an end-to-end pixel-level or latent tensor cross-attention network.
+- **Why**: M2's fine-tuned model (`Salesforce/blip-vqa-base` with LoRA) natively accepts a single 3-channel optical image tensor. True pixel/latent fusion would require retraining a dual-branch cross-attention encoder, which is outside the operational timeline.
+- **How it works**: The pipeline extracts optical semantic classifications via M2's model, computes radiometric radar backscatter distributions (mean intensity, specular water reflection ratio, double-bounce corner reflection ratio) from the SAR raster, queries the SAR modality for texture characteristics, and synthesizes these complementary physical perspectives into a unified natural language answer.
+- **Implication for M5 Agent Controller**: When presenting fusion results to users or generating explanations, the agent should state: *"Based on joint cross-modal synthesis of optical multi-spectral reflectance and co-registered SAR radar backscatter..."* rather than claiming raw neural pixel-fusion.
+
+---
+
+### 4. Known Weaknesses & Caveats for Teammates M5 (Agent) & M6 (Frontend)
+
+1. **Lighting & Seasonal Phenology Flagged as Change**:
+   - Sun angle changes, cast shadow variations, cloud shadows, or seasonal vegetative growth/browning between $T_1$ and $T_2$ produce radiometric pixel variance that can sometimes trigger `change_detected: true` even without structural construction.
+   - *Guidance for M5 (Agent)*: Instruct the agent to check whether `description` explicitly notes a categorical transition (e.g. forest $\to$ urban) versus minor surface variance before asserting physical development.
+
+2. **SAR Speckle Noise & Interpretability**:
+   - Due to coherent radar interference (Rayleigh speckle), raw SAR pixel values exhibit high spatial variance. The tool mitigates this using robust percentile filtering and area statistics, but fine-grained object boundaries are less precise in SAR than optical.
+
+3. **Single-Image VLM Comparative Prompting**:
+   - For change-based VQA, `answer_question` is called on both images independently. If the user question is highly complex, decomposing it into sub-questions about $T_1$ and $T_2$ via the M5 Agent Controller will produce superior analytical depth.
+
+---
+
+### 5. Verification
+Run the Phase 4 verification test suite:
+```bash
+python tests/test_change_and_fusion.py
+```
