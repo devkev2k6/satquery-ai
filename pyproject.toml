@@ -1,0 +1,9 @@
+[project]
+name = "satquery-ai"
+version = "0.1.0"
+description = "SatQuery AI - Interactive Earth Observation & Satellite Intelligence Dashboard"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.vercel]
+entrypoint = "frontend/app.py"

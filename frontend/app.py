@@ -340,3 +340,100 @@ if submit_clicked:
             )
         except Exception as e:
             st.warning(f"Could not compile PDF report: {e}")
+
+
+# =============================================================================
+# WSGI / SERVERLESS ENTRYPOINT (Vercel Python Runtime Support)
+# =============================================================================
+def app(environ, start_response):
+    """WSGI entrypoint exposed for Vercel Python serverless deployment."""
+    path = environ.get("PATH_INFO", "/")
+
+    if path in ("/api/health", "/health"):
+        status = "200 OK"
+        headers = [("Content-Type", "application/json")]
+        start_response(status, headers)
+        return [json.dumps({"status": "healthy", "service": "SatQuery AI"}).encode("utf-8")]
+
+    status = "200 OK"
+    headers = [("Content-Type", "text/html; charset=utf-8")]
+    start_response(status, headers)
+    html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SatQuery AI - Satellite Intelligence Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 650px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+        .icon { font-size: 3rem; margin-bottom: 1rem; }
+        h1 { font-size: 2rem; margin: 0 0 0.5rem 0; color: #38bdf8; }
+        p { color: #94a3b8; line-height: 1.6; margin-bottom: 1.5rem; font-size: 1.05rem; }
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+        .feature-item {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            border-left: 3px solid #38bdf8;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #064e3b;
+            color: #34d399;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">🛰️</div>
+        <h1>SatQuery AI</h1>
+        <div class="status-badge">● System Online & Ready</div>
+        <p>Interactive Earth Observation & Autonomous Satellite Intelligence Platform.</p>
+        <div class="features">
+            <div class="feature-item">📡 Optical & SAR Ingestion</div>
+            <div class="feature-item">🤖 Autonomous Agent Routing</div>
+            <div class="feature-item">🔍 Visual Grounding & VQA</div>
+            <div class="feature-item">📑 Automated PDF Intelligence</div>
+        </div>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 1.5rem;">
+            Run <code>streamlit run frontend/app.py</code> locally to launch the interactive UI.
+        </p>
+    </div>
+</body>
+</html>"""
+    return [html.encode("utf-8")]
+
