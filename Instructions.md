@@ -1,61 +1,57 @@
-You are working in the satquery-ai project folder, received from M2 (model fine-tuning).
-This is step 3 of a 6-person pipeline.
+You are working in the satquery-ai project folder, received from M3 (VQA & captioning).
+This is step 4 of a 6-person pipeline.
 
-FIRST: Read docs/HANDOFF.md in full, paying close attention to the section M2 wrote about
-their answer_question(image_path, question) function in models/inference.py — you will
-build directly on top of it. Also skim models/README.md for known model limitations.
+FIRST: Read docs/HANDOFF.md in full. Pay attention to M2's answer_question() function
+signature and M3's backend/vqa_tool.py and backend/captioning_tool.py — your new tools
+should follow the SAME dict-return pattern they established, for consistency. Also check
+M1's data/loader.py for load_cdvqa() (bi-temporal change pairs).
 
-YOUR TASK: Build the single-image baseline features required by the problem statement:
-(a) Visual Question Answering on a single image — MANDATORY, and (b) at least one of
-captioning/scene description OR text-guided region grounding — pick ONE, build it well.
-Recommend picking CAPTIONING first since it's simpler to demo reliably; only attempt
-grounding (drawing a box around a described object) if time allows.
+YOUR TASK: Build the two multi-image capabilities required by the problem statement:
+(a) change detection/description from a bi-temporal (before/after) image pair —
+MANDATORY, and (b) joint optical+SAR cross-modal analysis on a co-registered image pair
+— MANDATORY. These are two separate tools; build both.
 
 Do the following, in order:
 
-1. Create backend/vqa_tool.py with a function:
-   run_vqa(image_path: str, question: str) -> dict
-   It should call M2's answer_question() from models/inference.py, and return a
-   structured dict like:
-   {"task": "vqa", "answer": "...", "confidence": 0.0-1.0, "image_path": "..."}
-   Confidence can be a simple heuristic for now (e.g. based on answer length/certainty
-   phrasing) — document however you calculate it.
+1. Create backend/change_detection_tool.py with a function:
+   run_change_detection(image_path_before: str, image_path_after: str, question: str = None) -> dict
+   It should:
+   - If question is provided, answer it about what changed (change-based VQA)
+   - If no question, produce a general change description
+   - You can implement this by calling M2's answer_question() twice (once per image) and
+     combining the answers into a comparison, OR by prompting more cleverly if the model
+     supports multi-image input — document whichever approach you used and why
+   Return format:
+   {"task": "change_detection", "description": "...", "change_detected": true/false,
+    "confidence": 0.0-1.0, "before_path": "...", "after_path": "..."}
 
-2. Create backend/captioning_tool.py with a function:
-   run_captioning(image_path: str) -> dict
-   This should produce a natural-language description of the image's land cover and
-   major visible objects. You can implement this by prompting M2's model with a fixed
-   captioning-style question (e.g. "Describe the land cover and major objects visible in
-   this image.") if the model doesn't have a dedicated captioning mode. Return:
-   {"task": "captioning", "caption": "...", "confidence": 0.0-1.0, "image_path": "..."}
+2. Create backend/fusion_tool.py with a function:
+   run_optical_sar_fusion(optical_path: str, sar_path: str, question: str = None) -> dict
+   This must extract complementary information from a co-registered optical and SAR pair
+   (e.g. "identify built-up and water-covered regions using both images together"). If a
+   true multimodal fusion model is out of scope for the timeline, implement a reasonable
+   simplified version: run M2's model separately on each image, then combine the two
+   textual outputs into a single synthesized answer, clearly noting in code comments that
+   this is a text-level fusion approach rather than pixel-level fusion. Return:
+   {"task": "fusion", "answer": "...", "confidence": 0.0-1.0, "optical_path": "...",
+    "sar_path": "..."}
 
-3. IF TIME ALLOWS, create backend/grounding_tool.py with a function:
-   run_grounding(image_path: str, query: str) -> dict
-   That attempts to identify and return approximate bounding-box coordinates for the
-   object described in query (e.g. "the water body"). If the underlying model can't do
-   this reliably, implement a clearly-labeled simplified version (e.g. basic color/texture
-   heuristics for water/vegetation) and document this limitation clearly — do not claim
-   accuracy you don't have. Return:
-   {"task": "grounding", "bbox": [x1, y1, x2, y2], "confidence": 0.0-1.0, "image_path": "..."}
+3. Write tests/test_change_and_fusion.py testing both tools against sample pairs (use
+   M1's data/sample/pairs/ folder, or CDVQA sample data if available) and print results.
 
-4. Write tests/test_vqa_captioning.py that runs both tools against 3-5 sample images from
-   M1's data/sample/ folder and prints results, so anyone can verify the tools work by
-   running one command.
+4. Append to backend/README.md with the same documentation style M3 used: function
+   signatures, return formats, caveats.
 
-5. Write backend/README.md (create the backend/ README if it doesn't exist yet — future
-   teammates will keep adding to this same file) documenting each function's exact
-   signature, return format, and any caveats.
+5. Update docs/HANDOFF.md by APPENDING:
+   - Your two function signatures (M5 needs these exactly)
+   - Whether your fusion approach is true multimodal fusion or text-level combination —
+     be explicit, this affects how the agent controller should describe results to users
+   - Known weaknesses (e.g. "change detection sometimes flags lighting differences as
+     change")
 
-6. Update docs/HANDOFF.md by APPENDING:
-   - Which functions you built and their exact signatures (this matters a lot — M5 the
-     agent lead will call these directly)
-   - Whether you implemented captioning, grounding, or both
-   - Known weaknesses or edge cases (e.g. "captions are generic for cluttered urban
-     scenes")
+6. Commit your work to git.
 
-7. Commit your work to git.
+Do NOT modify data/, models/, or M3's backend/vqa_tool.py and captioning_tool.py — only
+ADD your two new files to backend/. Do NOT build the agent controller (M5) or frontend (M6).
 
-Do NOT modify data/ or models/ except to import/call from them. Do NOT build change
-detection (M4), the fusion tool (M4), the agent controller (M5), or the frontend (M6).
-
-When finished, run tests/test_vqa_captioning.py and paste the output.
+When finished, run tests/test_change_and_fusion.py and paste the output.
