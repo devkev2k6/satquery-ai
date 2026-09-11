@@ -8,8 +8,6 @@ app_file: frontend/app.py
 pinned: false
 ---
 
-# Your Project Title Here
-This is the rest of your README text...
 
 <div align="center">
 
