@@ -1,3 +1,15 @@
+---
+title: Satquery AI
+emoji: 🛰️
+colorFrom: blue
+colorTo: indigo
+sdk: streamlit
+pinned: false
+---
+
+# Your Project Title Here
+This is the rest of your README text...
+
 <div align="center">
 
 # 🛰️ SatQuery AI
